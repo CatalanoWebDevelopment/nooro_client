@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import PlusIcon from "@/components/ui/PlusIcon";
+import EmptyList from "@/components/EmptyList";
 
 export default function TaskList() {
   return (
@@ -13,7 +14,7 @@ export default function TaskList() {
         Add Task <PlusIcon className="ml-2" />
       </Button>
 
-      <section className="flex-1 w-3/4 mb-4">
+      <section className="flex-1 w-3/4 mb-4 flex flex-col">
         <div className="flex justify-between items-center text-sm">
           <div className="text-secondary">
             Tasks{" "}
@@ -29,6 +30,8 @@ export default function TaskList() {
             </span>
           </div>
         </div>
+
+        <EmptyList />
       </section>
     </div>
   );

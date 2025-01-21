@@ -15,6 +15,7 @@ export default {
         primary: "var(--primary)",
         secondary: "var(--secondary)",
         tertiary: "var(--tertiary)",
+        textSecondary: "var(--text-secondary)",
       },
     },
   },
