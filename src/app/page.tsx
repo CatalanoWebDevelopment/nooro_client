@@ -8,12 +8,7 @@ export default function Home() {
         <Logo />
       </header>
 
-      <section
-        className="flex flex-col flex-1 items-center justify-center w-full"
-        style={{ backgroundColor: "#1A1A1A" }}
-      >
-        <TaskList />
-      </section>
+      <TaskList />
     </main>
   );
 }
