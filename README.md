@@ -13,7 +13,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Important Note
 
-The development serving must be up and running in order to interact with any data.
+The development server must be up and running in order to interact with any data.
 
-- The development server runs on PORT:4000
+- The development server runs on `PORT:4000`
 - You can populate a `.env.local` file with `NEXT_PUBLIC_API_URL="http://localhost:4000"`
