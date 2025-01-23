@@ -1,16 +1,19 @@
 "use client";
 
 import clsx from "clsx";
+import { ButtonHTMLAttributes } from "react";
 
 interface ButtonProps {
-  onClick: () => void;
   children: React.ReactNode;
+  onClick?: () => void;
   className?: string;
+  props?: ButtonHTMLAttributes<HTMLButtonElement>;
 }
 
-export default function Button({ onClick, children, className }: ButtonProps) {
+export default function Button({ onClick, children, className, props }: ButtonProps) {
   return (
     <button
+      {...props}
       role="button"
       onClick={onClick}
       className={clsx(

@@ -1,17 +1,81 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import PlusIcon from "@/components/ui/PlusIcon";
 import EmptyList from "@/components/EmptyList";
+import TaskCard from "@/components/TaskCard";
+import Alert from "@/components/Alert";
+import { Task } from "@/types/Task";
 
 export default function TaskList() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch("/api/tasks");
+      const data = await response.json();
+      setTasks(data);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleComplete = async (taskId: string, completed: boolean) => {
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ completed }),
+      });
+
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, completed } : task
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update task:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!taskToDelete) return;
+
+    try {
+      await fetch(`/api/tasks/${taskToDelete}`, {
+        method: "DELETE",
+      });
+      setTasks(tasks.filter((task) => task.id !== taskToDelete));
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    } finally {
+      setTaskToDelete(null);
+    }
+  };
+
+  const completedCount = tasks.filter((task) => task.completed).length;
+
   return (
     <>
-      <Button
-        onClick={() => {}}
-        className="mt-[-25px] h-[50px] w-3/4 flex justify-center items-center"
-      >
-        Add Task <PlusIcon className="ml-2" />
+      <Button className="mt-[-25px] h-[50px] w-3/4 flex justify-center items-center">
+        <Link
+          href="/tasks/new"
+          className="flex items-center h-full w-full justify-center"
+        >
+          Create Task <PlusIcon className="ml-2" />
+        </Link>
       </Button>
 
       <section
@@ -24,24 +88,45 @@ export default function TaskList() {
               <div className="text-secondary">
                 Tasks{" "}
                 <span className="bg-foreground text-white px-2 py-1 rounded-full">
-                  0
+                  {tasks.length}
                 </span>
               </div>
 
               <div className="text-purple-400">
                 Completed{" "}
                 <span className="bg-foreground text-white px-2 py-1 rounded-full">
-                  0 of 0
+                  {completedCount} of {tasks.length}
                 </span>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              <EmptyList />
+              {isLoading && (
+                <div className="text-gray-400 my-8">Loading...</div>
+              )}
+              {!isLoading && tasks.length === 0 && <EmptyList />}
+              {!isLoading &&
+                tasks.length > 0 &&
+                tasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onToggleComplete={handleToggleComplete}
+                    onDelete={() => setTaskToDelete(task.id)}
+                  />
+                ))}
             </div>
           </div>
         </div>
       </section>
+
+      <Alert
+        open={!!taskToDelete}
+        onClose={() => setTaskToDelete(null)}
+        title="Are you sure?"
+        description="This action cannot be undone. This will permanently delete the task."
+        onConfirm={handleDelete}
+      />
     </>
   );
 }
