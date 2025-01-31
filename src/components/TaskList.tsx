@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import PlusIcon from "@/components/ui/PlusIcon";
@@ -8,15 +8,18 @@ import EmptyList from "@/components/EmptyList";
 import TaskCard from "@/components/TaskCard";
 import Alert from "@/components/Alert";
 import { Task } from "@/types/Task";
+import { Input } from "@/components/ui/Input";
+import { debounce } from "lodash";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [inputValue, setInputValue] = useState("");
+  const [_searchValue, setSearchValue] = useState("");
+  const [searchResults, setSearchResults] = useState<Task[] | null>(null);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  const completedCount = tasks.filter((task) => task.completed).length;
 
   const fetchTasks = async () => {
     try {
@@ -28,6 +31,34 @@ export default function TaskList() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const performSearch = async (query: string) => {
+    if (!query) {
+      setSearchResults(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tasks/search/${query}`);
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Failed to search tasks:", error);
+    }
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      setSearchValue(query);
+      performSearch(query);
+    }, 500),
+    []
+  );
+
+  const handleOnChange = (query: string) => {
+    setInputValue(query);
+    debouncedSearch(query);
   };
 
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
@@ -65,7 +96,9 @@ export default function TaskList() {
     }
   };
 
-  const completedCount = tasks.filter((task) => task.completed).length;
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   return (
     <>
@@ -77,6 +110,15 @@ export default function TaskList() {
           Create Task <PlusIcon className="ml-2" />
         </Link>
       </Button>
+
+      <section className="w-3/4 mt-4">
+        <Input
+          style={{ width: "100%", color: "#FFF" }}
+          placeholder="Search tasks..."
+          value={inputValue}
+          onChange={(e) => handleOnChange(e.target?.value)}
+        />
+      </section>
 
       <section
         className="flex flex-col flex-1 items-center justify-center w-full overflow-hidden my-8"
@@ -106,8 +148,8 @@ export default function TaskList() {
               )}
               {!isLoading && tasks.length === 0 && <EmptyList />}
               {!isLoading &&
-                tasks.length > 0 &&
-                tasks.map((task) => (
+                ((searchResults?.length ?? 0) > 0 || tasks.length > 0) &&
+                (searchResults ?? tasks).map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
